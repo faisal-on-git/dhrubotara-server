@@ -1,33 +1,37 @@
 module Api
   module V1
-    class TransactionsController < ApplicationController
+    class TransactionsController < BaseController
       before_action :set_transaction, only: [:show, :update, :destroy]
 
       def index
-        @transactions = Transaction.includes(:account).all
-        render json: @transactions
+        transactions = Transaction.all
+        
+        transactions = transactions.where(account_id: params[:account_id]) if params[:account_id]
+        transactions = transactions.where(transaction_type: params[:type]) if params[:type]
+        transactions = transactions.where(category: params[:category]) if params[:category]
+        
+        if params[:start_date] && params[:end_date]
+          transactions = transactions.for_period(
+            Date.parse(params[:start_date]),
+            Date.parse(params[:end_date])
+          )
+        end
+
+        render_success(transactions: transactions)
       end
 
       def show
-        render json: @transaction
+        render_success(transaction: @transaction)
       end
 
       def create
-        @transaction = Transaction.new(transaction_params)
-
-        if @transaction.save
-          render json: @transaction, status: :created
-        else
-          render json: @transaction.errors, status: :unprocessable_entity
-        end
+        transaction = Transaction.create!(transaction_params)
+        render_success({ transaction: transaction }, :created)
       end
 
       def update
-        if @transaction.update(transaction_params)
-          render json: @transaction
-        else
-          render json: @transaction.errors, status: :unprocessable_entity
-        end
+        @transaction.update!(transaction_params)
+        render_success(transaction: @transaction)
       end
 
       def destroy
@@ -42,7 +46,16 @@ module Api
       end
 
       def transaction_params
-        params.require(:transaction).permit(:date, :description, :amount, :transaction_type, :category, :account_id)
+        params.require(:transaction).permit(
+          :date,
+          :description,
+          :amount,
+          :transaction_type,
+          :category,
+          :account_id,
+          :transfer_account_id,
+          :budget_id
+        )
       end
     end
   end

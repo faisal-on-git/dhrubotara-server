@@ -1,46 +1,50 @@
 module Api
   module V1
-    class BudgetsController < ApplicationController
-      before_action :set_budget, only: [:show, :update, :destroy]
+    class BudgetsController < BaseController
+      before_action :set_budget, only: [:show, :update, :destroy, :progress]
 
       def index
-        @budgets = Budget.all
-        render json: @budgets.map { |budget|
-          budget.as_json.merge(
-            remaining: budget.remaining,
-            percentage_used: budget.percentage_used
-          )
-        }
+        budgets = Budget.all
+        budgets = budgets.active if params[:active].present?
+        
+        if params[:date]
+          date = Date.parse(params[:date])
+          budgets = budgets.for_month(date)
+        end
+
+        render_success(budgets: budgets)
       end
 
       def show
-        render json: @budget.as_json.merge(
-          remaining: @budget.remaining,
-          percentage_used: @budget.percentage_used
-        )
+        render_success(budget: @budget)
       end
 
       def create
-        @budget = Budget.new(budget_params)
-
-        if @budget.save
-          render json: @budget, status: :created
-        else
-          render json: @budget.errors, status: :unprocessable_entity
-        end
+        budget = Budget.create!(budget_params)
+        render_success({ budget: budget }, :created)
       end
 
       def update
-        if @budget.update(budget_params)
-          render json: @budget
-        else
-          render json: @budget.errors, status: :unprocessable_entity
-        end
+        @budget.update!(budget_params)
+        render_success(budget: @budget)
       end
 
       def destroy
         @budget.destroy
         head :no_content
+      end
+
+      def progress
+        progress_data = {
+          budget: @budget,
+          remaining: @budget.remaining,
+          percentage_used: @budget.percentage_used,
+          status: @budget.status,
+          days_remaining: @budget.days_remaining,
+          daily_budget: @budget.daily_budget
+        }
+        
+        render_success(progress: progress_data)
       end
 
       private
@@ -50,7 +54,13 @@ module Api
       end
 
       def budget_params
-        params.require(:budget).permit(:category, :budgeted, :spent)
+        params.require(:budget).permit(
+          :category,
+          :budgeted,
+          :spent,
+          :start_date,
+          :end_date
+        )
       end
     end
   end

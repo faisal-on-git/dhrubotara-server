@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_02_09_222215) do
+ActiveRecord::Schema[7.1].define(version: 2025_02_15_221929) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -20,6 +20,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_02_09_222215) do
     t.decimal "balance"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "category", default: "asset", null: false
+    t.boolean "active", default: true, null: false
   end
 
   create_table "budgets", force: :cascade do |t|
@@ -28,6 +30,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_02_09_222215) do
     t.decimal "spent"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.date "start_date", null: false
+    t.date "end_date", null: false
   end
 
   create_table "transactions", force: :cascade do |t|
@@ -39,8 +43,14 @@ ActiveRecord::Schema[7.1].define(version: 2025_02_09_222215) do
     t.bigint "account_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "transfer_account_id"
+    t.bigint "budget_id"
     t.index ["account_id"], name: "index_transactions_on_account_id"
+    t.index ["budget_id"], name: "index_transactions_on_budget_id"
+    t.index ["transfer_account_id"], name: "index_transactions_on_transfer_account_id"
   end
 
   add_foreign_key "transactions", "accounts"
+  add_foreign_key "transactions", "accounts", column: "transfer_account_id"
+  add_foreign_key "transactions", "budgets"
 end

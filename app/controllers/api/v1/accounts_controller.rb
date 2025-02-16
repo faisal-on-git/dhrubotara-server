@@ -1,38 +1,38 @@
 module Api
   module V1
-    class AccountsController < ApplicationController
-      before_action :set_account, only: [:show, :update, :destroy]
+    class AccountsController < BaseController
+      before_action :set_account, only: [:show, :update, :destroy, :statement]
 
       def index
-        @accounts = Account.all
-        render json: @accounts
+        accounts = Account.all
+        render_success(accounts: accounts)
       end
 
       def show
-        render json: @account
+        render_success(account: @account)
       end
 
       def create
-        @account = Account.new(account_params)
-
-        if @account.save
-          render json: @account, status: :created
-        else
-          render json: @account.errors, status: :unprocessable_entity
-        end
+        account = Account.create!(account_params)
+        render_success({ account: account }, :created)
       end
 
       def update
-        if @account.update(account_params)
-          render json: @account
-        else
-          render json: @account.errors, status: :unprocessable_entity
-        end
+        @account.update!(account_params)
+        render_success(account: @account)
       end
 
       def destroy
         @account.destroy
         head :no_content
+      end
+
+      def statement
+        start_date = Date.parse(params[:start_date])
+        end_date = Date.parse(params[:end_date])
+        
+        statement_data = @account.statement(start_date, end_date)
+        render_success(statement: statement_data)
       end
 
       private
@@ -42,7 +42,13 @@ module Api
       end
 
       def account_params
-        params.require(:account).permit(:name, :account_type, :balance)
+        params.require(:account).permit(
+          :name,
+          :account_type,
+          :balance,
+          :category,
+          :active
+        )
       end
     end
   end
