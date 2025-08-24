@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_02_16_021600) do
+ActiveRecord::Schema[7.1].define(version: 2025_08_21_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -22,6 +22,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_02_16_021600) do
     t.datetime "updated_at", null: false
     t.string "category", default: "asset", null: false
     t.boolean "active", default: true, null: false
+    t.string "currency", default: "USD", null: false
   end
 
   create_table "budgets", force: :cascade do |t|

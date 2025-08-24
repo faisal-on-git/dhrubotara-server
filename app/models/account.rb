@@ -4,9 +4,10 @@ class Account < ApplicationRecord
   has_many :incoming_transfers, class_name: 'Transaction', foreign_key: 'transfer_account_id'
 
   validates :name, presence: true
-  validates :account_type, presence: true, inclusion: { in: %w[checking savings credit_card loan investment cash] }
+  validates :account_type, inclusion: { in: %w[checking savings credit_card loan investment cash] }, allow_blank: true
   validates :balance, presence: true, numericality: true
-  validates :category, presence: true, inclusion: { in: %w[asset liability] }
+  validates :category, presence: true, inclusion: { in: %w[asset liability other] }
+  validates :currency, presence: true
 
   scope :assets, -> { where(category: 'asset') }
   scope :liabilities, -> { where(category: 'liability') }

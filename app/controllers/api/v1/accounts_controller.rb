@@ -47,7 +47,8 @@ module Api
           :account_type,
           :balance,
           :category,
-          :active
+          :active,
+          :currency
         )
       end
     end
