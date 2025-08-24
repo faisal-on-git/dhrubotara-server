@@ -4,7 +4,7 @@ module Api
       before_action :set_transaction, only: [:show, :update, :destroy]
 
       def index
-        transactions = Transaction.all
+        transactions = Transaction.includes(:account).all
         
         transactions = transactions.where(account_id: params[:account_id]) if params[:account_id]
         transactions = transactions.where(transaction_type: params[:type]) if params[:type]
@@ -17,21 +17,22 @@ module Api
           )
         end
 
-        render_success(transactions: transactions)
+        serialized = TransactionSerializer.new(transactions).serializable_hash[:data].map { |d| d[:attributes] }
+        render_success(transactions: serialized)
       end
 
       def show
-        render_success(transaction: @transaction)
+        render_success(transaction: TransactionSerializer.new(@transaction).serializable_hash[:data][:attributes])
       end
 
       def create
         transaction = Transaction.create!(transaction_params)
-        render_success({ transaction: transaction }, :created)
+        render_success({ transaction: TransactionSerializer.new(transaction).serializable_hash[:data][:attributes] }, :created)
       end
 
       def update
         @transaction.update!(transaction_params)
-        render_success(transaction: @transaction)
+        render_success(transaction: TransactionSerializer.new(@transaction).serializable_hash[:data][:attributes])
       end
 
       def destroy
