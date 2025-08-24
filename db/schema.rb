@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_02_15_221929) do
+ActiveRecord::Schema[7.1].define(version: 2025_08_21_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -22,6 +22,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_02_15_221929) do
     t.datetime "updated_at", null: false
     t.string "category", default: "asset", null: false
     t.boolean "active", default: true, null: false
+    t.string "currency", default: "USD", null: false
   end
 
   create_table "budgets", force: :cascade do |t|
@@ -48,6 +49,20 @@ ActiveRecord::Schema[7.1].define(version: 2025_02_15_221929) do
     t.index ["account_id"], name: "index_transactions_on_account_id"
     t.index ["budget_id"], name: "index_transactions_on_budget_id"
     t.index ["transfer_account_id"], name: "index_transactions_on_transfer_account_id"
+  end
+
+  create_table "users", force: :cascade do |t|
+    t.string "email", default: "", null: false
+    t.string "encrypted_password", default: "", null: false
+    t.string "reset_password_token"
+    t.datetime "reset_password_sent_at"
+    t.datetime "remember_created_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "jti", null: false
+    t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["jti"], name: "index_users_on_jti", unique: true
+    t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
   add_foreign_key "transactions", "accounts"
