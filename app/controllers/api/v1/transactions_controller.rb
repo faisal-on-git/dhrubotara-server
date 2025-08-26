@@ -53,6 +53,7 @@ module Api
           :amount,
           :transaction_type,
           :category,
+          :category_id,
           :account_id,
           :transfer_account_id,
           :budget_id

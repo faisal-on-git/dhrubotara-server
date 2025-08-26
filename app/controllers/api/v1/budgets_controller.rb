@@ -55,7 +55,7 @@ module Api
 
       def budget_params
         params.require(:budget).permit(
-          :category,
+          :category_id,
           :budgeted,
           :spent,
           :start_date,
