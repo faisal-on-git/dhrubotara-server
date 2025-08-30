@@ -33,6 +33,9 @@ Rails.application.routes.draw do
       resources :budgets do
         get 'progress', on: :member
       end
+
+      # Category routes
+      resources :categories
     end
   end
 
