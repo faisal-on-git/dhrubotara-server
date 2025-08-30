@@ -2,13 +2,14 @@ module Api
   module V1
     class DashboardController < BaseController
       def summary
-        current_month = Date.current.beginning_of_month..Date.current.end_of_month
+        start_month = Date.current.beginning_of_month
+        end_month   = Date.current.end_of_month
 
         summary_data = {
           net_worth: calculate_net_worth,
           month_to_date: {
-            income: Transaction.income.for_period(current_month).sum(:amount),
-            expenses: Transaction.expense.for_period(current_month).sum(:amount)
+            income: Transaction.income.for_period(start_month, end_month).sum(:amount),
+            expenses: Transaction.expense.for_period(start_month, end_month).sum(:amount)
           },
           accounts: {
             assets: Account.assets.sum(:balance),
@@ -36,23 +37,29 @@ module Api
       end
 
       def cash_flow
-        start_date = params.fetch(:start_date, Date.current.beginning_of_month)
-        end_date = params.fetch(:end_date, Date.current.end_of_month)
-        period = Date.parse(start_date)..Date.parse(end_date)
+        start_param = params[:start_date]
+        end_param   = params[:end_date]
+
+        start_date = start_param ? Date.parse(start_param.to_s) : Date.current.beginning_of_month
+        end_date   = end_param   ? Date.parse(end_param.to_s)   : Date.current.end_of_month
 
         data = {
           period: {
-            start_date: period.begin,
-            end_date: period.end
+            start_date: start_date,
+            end_date: end_date
           },
-          income: Transaction.income.for_period(period)
-                           .group(:category)
+          income: Transaction.income
+                           .for_period(start_date, end_date)
+                           .left_joins(:category)
+                           .group("COALESCE(categories.name, 'Uncategorized')")
                            .sum(:amount),
-          expenses: Transaction.expense.for_period(period)
-                             .group(:category)
-                             .sum(:amount),
-          net: Transaction.income.for_period(period).sum(:amount) -
-               Transaction.expense.for_period(period).sum(:amount)
+          expenses: Transaction.expense
+                               .for_period(start_date, end_date)
+                               .left_joins(:category)
+                               .group("COALESCE(categories.name, 'Uncategorized')")
+                               .sum(:amount),
+          net: Transaction.income.for_period(start_date, end_date).sum(:amount) -
+               Transaction.expense.for_period(start_date, end_date).sum(:amount)
         }
 
         render_success(cash_flow: data)
