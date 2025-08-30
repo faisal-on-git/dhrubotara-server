@@ -26,12 +26,30 @@ module Api
       end
 
       def create
-        transaction = Transaction.create!(transaction_params)
+        attrs = transaction_params
+        if attrs[:category_id].present? && attrs[:date].present?
+          date = Date.parse(attrs[:date])
+          budget = Budget.where(category_id: attrs[:category_id])
+                          .where("start_date <= ? AND end_date >= ?", date, date)
+                          .first
+          attrs[:budget_id] = budget.id if budget
+        end
+
+        transaction = Transaction.create!(attrs)
         render_success({ transaction: TransactionSerializer.new(transaction).serializable_hash[:data][:attributes] }, :created)
       end
 
       def update
-        @transaction.update!(transaction_params)
+        attrs = transaction_params
+        if attrs[:category_id].present? && attrs[:date].present?
+          date = Date.parse(attrs[:date])
+          budget = Budget.where(category_id: attrs[:category_id])
+                          .where("start_date <= ? AND end_date >= ?", date, date)
+                          .first
+          attrs[:budget_id] = budget.id if budget
+        end
+
+        @transaction.update!(attrs)
         render_success(transaction: TransactionSerializer.new(@transaction).serializable_hash[:data][:attributes])
       end
 
