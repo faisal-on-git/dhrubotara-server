@@ -20,7 +20,7 @@ module Api
       end
 
       def create
-        budget = Budget.create!(budget_params)
+        budget = current_user.budgets.create!(budget_params)
         render_success({ budget: budget }, :created)
       end
 
@@ -37,6 +37,8 @@ module Api
       def progress
         progress_data = {
           budget: @budget,
+          total_budgeted: @budget.total_budgeted,
+          spent: @budget.spent,
           remaining: @budget.remaining,
           percentage_used: @budget.percentage_used,
           status: @budget.status,
@@ -55,11 +57,11 @@ module Api
 
       def budget_params
         params.require(:budget).permit(
-          :category_id,
-          :budgeted,
-          :spent,
+          :name,
           :start_date,
-          :end_date
+          :end_date,
+          :currency,
+          budget_categories_attributes: [:category_id, :budgeted_spend]
         )
       end
     end

@@ -5,6 +5,8 @@ module Api
       rescue_from ActiveRecord::RecordInvalid, with: :unprocessable_entity
       rescue_from ActionController::ParameterMissing, with: :bad_request
 
+      before_action :authenticate_user!
+
       private
 
       def not_found(exception)

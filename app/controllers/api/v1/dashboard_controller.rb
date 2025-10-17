@@ -16,8 +16,8 @@ module Api
             liabilities: Account.liabilities.sum(:balance)
           },
           budgets: {
-            total_budgeted: Budget.active.sum(:budgeted),
-            total_spent: Budget.active.sum(:spent)
+            total_budgeted: BudgetCategory.joins(:budget).merge(Budget.active).sum(:budgeted_spend),
+            total_spent: Transaction.expense.where(date: Budget.active.minimum(:start_date)..Budget.active.maximum(:end_date)).sum(:amount)
           }
         }
 

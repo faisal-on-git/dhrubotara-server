@@ -29,13 +29,14 @@ module Api
         attrs = transaction_params
         if attrs[:category_id].present? && attrs[:date].present?
           date = Date.parse(attrs[:date])
-          budget = Budget.where(category_id: attrs[:category_id])
-                          .where("start_date <= ? AND end_date >= ?", date, date)
-                          .first
-          attrs[:budget_id] = budget.id if budget
+          budget_cat = BudgetCategory.joins(:budget)
+                                     .where(category_id: attrs[:category_id])
+                                     .where("budgets.start_date <= ? AND budgets.end_date >= ?", date, date)
+                                     .first
+          attrs[:budget_category_id] = budget_cat.id if budget_cat
         end
 
-        transaction = Transaction.create!(attrs)
+        transaction = current_user.transactions.create!(attrs)
         render_success({ transaction: TransactionSerializer.new(transaction).serializable_hash[:data][:attributes] }, :created)
       end
 
@@ -43,10 +44,11 @@ module Api
         attrs = transaction_params
         if attrs[:category_id].present? && attrs[:date].present?
           date = Date.parse(attrs[:date])
-          budget = Budget.where(category_id: attrs[:category_id])
-                          .where("start_date <= ? AND end_date >= ?", date, date)
-                          .first
-          attrs[:budget_id] = budget.id if budget
+          budget_cat = BudgetCategory.joins(:budget)
+                                     .where(category_id: attrs[:category_id])
+                                     .where("budgets.start_date <= ? AND budgets.end_date >= ?", date, date)
+                                     .first
+          attrs[:budget_category_id] = budget_cat.id if budget_cat
         end
 
         @transaction.update!(attrs)

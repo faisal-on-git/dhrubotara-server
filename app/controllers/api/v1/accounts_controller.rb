@@ -4,7 +4,7 @@ module Api
       before_action :set_account, only: [:show, :update, :destroy, :statement]
 
       def index
-        accounts = Account.all
+        accounts = current_user.accounts
         render_success(accounts: accounts)
       end
 
@@ -13,7 +13,7 @@ module Api
       end
 
       def create
-        account = Account.create!(account_params)
+        account = current_user.accounts.create!(account_params)
         render_success({ account: account }, :created)
       end
 
@@ -38,7 +38,7 @@ module Api
       private
 
       def set_account
-        @account = Account.find(params[:id])
+        @account = current_user.accounts.find(params[:id])
       end
 
       def account_params
@@ -46,7 +46,7 @@ module Api
           :name,
           :account_type,
           :balance,
-          :category,
+          :classification,
           :active,
           :currency
         )

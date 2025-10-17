@@ -10,37 +10,52 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_08_21_003000) do
+ActiveRecord::Schema[7.1].define(version: 2025_10_17_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
   create_table "accounts", force: :cascade do |t|
-    t.string "name"
+    t.bigint "user_id", null: false
+    t.string "name", null: false
     t.string "account_type"
-    t.decimal "balance"
+    t.string "classification", default: "asset", null: false
+    t.decimal "balance", precision: 15, scale: 2, default: "0.0", null: false
+    t.string "currency", default: "USD", null: false
+    t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "category", default: "asset", null: false
-    t.boolean "active", default: true, null: false
-    t.string "currency", default: "USD", null: false
+    t.index ["user_id", "name"], name: "index_accounts_on_user_id_and_name", unique: true
+    t.index ["user_id"], name: "index_accounts_on_user_id"
+  end
+
+  create_table "budget_categories", force: :cascade do |t|
+    t.bigint "budget_id", null: false
+    t.bigint "category_id", null: false
+    t.decimal "budgeted_spend", precision: 15, scale: 2, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["budget_id", "category_id"], name: "index_budget_categories_on_budget_id_and_category_id", unique: true
+    t.index ["budget_id"], name: "index_budget_categories_on_budget_id"
+    t.index ["category_id"], name: "index_budget_categories_on_category_id"
   end
 
   create_table "budgets", force: :cascade do |t|
-    t.string "category"
-    t.decimal "budgeted"
-    t.decimal "spent"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.string "name"
     t.date "start_date", null: false
     t.date "end_date", null: false
-    t.bigint "category_id"
-    t.index ["category_id", "start_date"], name: "index_budgets_on_category_and_start", unique: true
-    t.index ["category_id"], name: "index_budgets_on_category_id"
+    t.string "currency", default: "USD", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_budgets_on_user_id"
   end
 
   create_table "categories", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "name", null: false
+    t.string "classification", default: "expense", null: false
+    t.string "icon"
+    t.string "icon_color"
     t.bigint "parent_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -50,21 +65,23 @@ ActiveRecord::Schema[7.1].define(version: 2025_08_21_003000) do
   end
 
   create_table "transactions", force: :cascade do |t|
-    t.date "date"
+    t.bigint "user_id", null: false
+    t.date "date", null: false
     t.string "description"
-    t.decimal "amount"
-    t.string "transaction_type"
-    t.string "category"
+    t.decimal "amount", precision: 15, scale: 2, null: false
+    t.string "transaction_type", null: false
     t.bigint "account_id", null: false
+    t.bigint "transfer_account_id"
+    t.bigint "category_id"
+    t.bigint "budget_category_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "transfer_account_id"
-    t.bigint "budget_id"
-    t.bigint "category_id"
     t.index ["account_id"], name: "index_transactions_on_account_id"
-    t.index ["budget_id"], name: "index_transactions_on_budget_id"
+    t.index ["budget_category_id"], name: "index_transactions_on_budget_category_id"
     t.index ["category_id"], name: "index_transactions_on_category_id"
+    t.index ["date"], name: "index_transactions_on_date"
     t.index ["transfer_account_id"], name: "index_transactions_on_transfer_account_id"
+    t.index ["user_id"], name: "index_transactions_on_user_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -81,11 +98,15 @@ ActiveRecord::Schema[7.1].define(version: 2025_08_21_003000) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
-  add_foreign_key "budgets", "categories"
+  add_foreign_key "accounts", "users"
+  add_foreign_key "budget_categories", "budgets"
+  add_foreign_key "budget_categories", "categories"
+  add_foreign_key "budgets", "users"
   add_foreign_key "categories", "categories", column: "parent_id"
   add_foreign_key "categories", "users"
   add_foreign_key "transactions", "accounts"
   add_foreign_key "transactions", "accounts", column: "transfer_account_id"
-  add_foreign_key "transactions", "budgets"
+  add_foreign_key "transactions", "budget_categories"
   add_foreign_key "transactions", "categories"
+  add_foreign_key "transactions", "users"
 end
