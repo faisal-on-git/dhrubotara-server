@@ -2,14 +2,27 @@ module Api
   module V1
     class DashboardController < BaseController
       def summary
-        start_month = Date.current.beginning_of_month
-        end_month   = Date.current.end_of_month
+        start_param = params[:start_date]
+        end_param   = params[:end_date]
+        account_id  = params[:account_id]
+
+        start_date = start_param ? Date.parse(start_param.to_s) : Date.current.beginning_of_month
+        end_date   = end_param   ? Date.parse(end_param.to_s)   : Date.current.end_of_month
+
+        # Build transaction query with optional account filter
+        income_query = Transaction.income.for_period(start_date, end_date)
+        expense_query = Transaction.expense.for_period(start_date, end_date)
+
+        if account_id.present?
+          income_query = income_query.where(account_id: account_id)
+          expense_query = expense_query.where(account_id: account_id)
+        end
 
         summary_data = {
           net_worth: calculate_net_worth,
           month_to_date: {
-            income: Transaction.income.for_period(start_month, end_month).sum(:amount),
-            expenses: Transaction.expense.for_period(start_month, end_month).sum(:amount)
+            income: income_query.sum(:amount),
+            expenses: expense_query.sum(:amount)
           },
           accounts: {
             assets: Account.assets.sum(:balance),
@@ -39,27 +52,34 @@ module Api
       def cash_flow
         start_param = params[:start_date]
         end_param   = params[:end_date]
+        account_id  = params[:account_id]
 
         start_date = start_param ? Date.parse(start_param.to_s) : Date.current.beginning_of_month
         end_date   = end_param   ? Date.parse(end_param.to_s)   : Date.current.end_of_month
+
+        # Build queries with optional account filter
+        income_query = Transaction.income.for_period(start_date, end_date)
+        expense_query = Transaction.expense.for_period(start_date, end_date)
+
+        if account_id.present?
+          income_query = income_query.where(account_id: account_id)
+          expense_query = expense_query.where(account_id: account_id)
+        end
 
         data = {
           period: {
             start_date: start_date,
             end_date: end_date
           },
-          income: Transaction.income
-                           .for_period(start_date, end_date)
-                           .left_joins(:category)
-                           .group("COALESCE(categories.name, 'Uncategorized')")
-                           .sum(:amount),
-          expenses: Transaction.expense
-                               .for_period(start_date, end_date)
-                               .left_joins(:category)
-                               .group("COALESCE(categories.name, 'Uncategorized')")
-                               .sum(:amount),
-          net: Transaction.income.for_period(start_date, end_date).sum(:amount) -
-               Transaction.expense.for_period(start_date, end_date).sum(:amount)
+          income: income_query
+                    .left_joins(:category)
+                    .group("COALESCE(categories.name, 'Uncategorized')")
+                    .sum(:amount),
+          expenses: expense_query
+                      .left_joins(:category)
+                      .group("COALESCE(categories.name, 'Uncategorized')")
+                      .sum(:amount),
+          net: income_query.sum(:amount) - expense_query.sum(:amount)
         }
 
         render_success(cash_flow: data)
