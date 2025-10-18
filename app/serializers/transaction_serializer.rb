@@ -9,7 +9,7 @@ class TransactionSerializer
              :category,
              :account_id,
              :transfer_account_id,
-             :budget_id,
+             :budget_category_id,
              :created_at,
              :updated_at
 

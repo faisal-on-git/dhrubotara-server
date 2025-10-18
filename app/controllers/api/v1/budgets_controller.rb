@@ -4,7 +4,7 @@ module Api
       before_action :set_budget, only: [:show, :update, :destroy, :progress]
 
       def index
-        budgets = Budget.all
+        budgets = Budget.includes(:budget_categories).all
         budgets = budgets.active if params[:active].present?
         
         if params[:date]
@@ -12,21 +12,25 @@ module Api
           budgets = budgets.for_month(date)
         end
 
-        render_success(budgets: budgets)
+        serialized_budgets = budgets.map { |budget| BudgetSerializer.new(budget).as_json }
+        render_success(budgets: serialized_budgets)
       end
 
       def show
-        render_success(budget: @budget)
+        serialized_budget = BudgetSerializer.new(@budget).as_json
+        render_success(budget: serialized_budget)
       end
 
       def create
         budget = current_user.budgets.create!(budget_params)
-        render_success({ budget: budget }, :created)
+        serialized_budget = BudgetSerializer.new(budget).as_json
+        render_success({ budget: serialized_budget }, :created)
       end
 
       def update
         @budget.update!(budget_params)
-        render_success(budget: @budget)
+        serialized_budget = BudgetSerializer.new(@budget).as_json
+        render_success(budget: serialized_budget)
       end
 
       def destroy

@@ -76,7 +76,7 @@ module Api
           :category_id,
           :account_id,
           :transfer_account_id,
-          :budget_id
+          :budget_category_id
         )
       end
     end
